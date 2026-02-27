@@ -12,7 +12,7 @@ const flash = require('connect-flash');
 
 const errorController = require('./controllers/error');
 const User = require('./models/user');
-const MONGODB_URI = 'mongodb+srv://vaytekusartem_db_user:6a6VUJ6eYoSzAqfp@nodejscluster.dpwis98.mongodb.net/shop?appName=NodeJSCluster';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 const app = express();
 
