@@ -16,12 +16,19 @@ router.post('/signup',
     check('email')
       .isEmail()
       .withMessage('Please enter a valid email.')
-      // .normalizeEmail(), 
       .custom((value, { req }) => {
-        if(value.includes('@test.com')) {
-          throw new Error('This email address is forbidden!');
-        }
-        return true;
+        // if(value.includes('@test.com')) {
+        //   throw new Error('This email address is forbidden!');
+        // }
+        // return true;
+        
+        return User.findOne({email: value})
+          .then(userDoc => {
+            console.log('userDoc', userDoc)
+            if (userDoc) {
+              return Promise.reject('E-Mail already exists!');
+            }
+          });
       }), 
     body('password', 'Please enter a password with only numbers and text at least 5 characters.')
       .trim()

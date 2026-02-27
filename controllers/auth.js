@@ -36,6 +36,17 @@ exports.postLogin = (req, res, next) => {
   // res.setHeader('Set-Cookie', 'loggedIn=true; HttpOnly');
   const email = req.body.email;
   const password = req.body.password;
+
+  const errors = validationResult(req);
+  
+  if(!errors.isEmpty()) {
+    return res.status(422).render('auth/login', {
+      path: '/login',
+      pageTitle: 'Login',
+      errorMessage: errors.array()[0].msg
+    });
+  }
+
   User.findOne({email: email})
     .then(user => {
       if (!user) {
@@ -94,37 +105,25 @@ exports.postSignup = (req, res, next) => {
     });
   }
 
-  User.findOne({email: email})
-    .then(userDoc => {
-      if (userDoc) {
-        req.flash('error', 'User already exists.');
-        return req.session.save((err) => {
-          res.redirect('/signup');
-        });
-      }
+  bcrypt.hash(password, 12)
+    .then(hashedPassword => {
+      const user = new User({
+        email: email,
+        password: hashedPassword,
+        cart: { items: [] }
+      });
 
-      return bcrypt.hash(password, 12)
-        .then(hashedPassword => {
-          const user = new User({
-            email: email,
-            password: hashedPassword,
-            cart: { items: [] }
-          });
-    
-          return user.save();
-        })
-        .then(() => {
-          res.redirect('/login');
-          return transporter.sendMail({
-            to: email,
-            from: fromEmail,
-            subject: 'Signup Success',
-            html: '<h1>Signup Success</h1>'
-          });
-        });
-
+      return user.save();
     })
-    .catch(err => console.log(err));
+    .then(() => {
+      res.redirect('/login');
+      return transporter.sendMail({
+        to: email,
+        from: fromEmail,
+        subject: 'Signup Success',
+        html: '<h1>Signup Success</h1>'
+      });
+    });
 }
 
 exports.postLogout = (req, res, next) => {
