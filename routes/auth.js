@@ -7,7 +7,14 @@ const User = require('../models/user');
 
 router.get('/login', authController.getLogin);
 
-router.post('/login', authController.postLogin);
+router.post(
+  '/login',
+  [
+    body('email').isEmail().withMessage('Please enter a valid email.').normalizeEmail({ gmail_remove_dots: false }).trim(),
+    body('password').trim().notEmpty().withMessage('Please enter your password.')
+  ],
+  authController.postLogin
+);
 
 router.get('/signup', authController.getSignup);
 
@@ -15,25 +22,27 @@ router.post('/signup',
   [
     check('email')
       .isEmail()
+      .normalizeEmail({ gmail_remove_dots: false })
+      .trim()
       .withMessage('Please enter a valid email.')
       .custom((value, { req }) => {
         // if(value.includes('@test.com')) {
         //   throw new Error('This email address is forbidden!');
         // }
         // return true;
-        
+
         return User.findOne({email: value})
           .then(userDoc => {
-            console.log('userDoc', userDoc)
             if (userDoc) {
               return Promise.reject('E-Mail already exists!');
             }
           });
-      }), 
-    body('password', 'Please enter a password with only numbers and text at least 5 characters.')
+      }),
+    body('password', 'Please enter a password with only numbers and text at least 2 characters.')
       .trim()
       .isLength({ min: 2 })
-      .isAlphanumeric(),
+      .isAlphanumeric()
+      .trim(),
     check('confirmPassword')
       .trim()
       .custom((value, { req }) => {

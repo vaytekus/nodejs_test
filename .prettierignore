@@ -1,0 +1,2 @@
+# Prettier doesn't support EJS syntax; use built-in HTML formatter
+**/*.ejs

@@ -28,7 +28,12 @@ exports.getLogin = (req, res, next) => {
 
   res.render('auth/login', {
     path: '/login',
-    pageTitle: 'Login'
+    pageTitle: 'Login',
+    oldInput: {
+      email: '',
+      password: ''
+    },
+    validationErrors: []
   });
 }
 
@@ -36,27 +41,37 @@ exports.postLogin = (req, res, next) => {
   // res.setHeader('Set-Cookie', 'loggedIn=true; HttpOnly');
   const email = req.body.email;
   const password = req.body.password;
+  console.log(email, password);
 
   const errors = validationResult(req);
-  
-  if(!errors.isEmpty()) {
+
+  if (!errors.isEmpty()) {
     return res.status(422).render('auth/login', {
       path: '/login',
       pageTitle: 'Login',
-      errorMessage: errors.array()[0].msg
+      errorMessage: errors.array()[0].msg,
+      oldInput: {
+        email: email,
+        password: password
+      },
+      validationErrors: errors.array()
     });
   }
 
-  User.findOne({email: email})
+  User.findOne({ email: email })
     .then(user => {
       if (!user) {
-        req.flash('error', 'Invalid email or password.');
-        return req.session.save((err) => {
-          res.redirect('/login');
+        // req.flash('error', 'Invalid email or password.');
+        return res.status(422).render('auth/login', {
+          path: '/login',
+          pageTitle: 'Login',
+          errorMessage: 'Invalid email or password.',
+          oldInput: { email, password },
+          validationErrors: []
         });
       }
 
-      return bcrypt
+      bcrypt
         .compare(password, user.password)
         .then(doMatch => {
           if (doMatch) {
@@ -67,9 +82,16 @@ exports.postLogin = (req, res, next) => {
               res.redirect('/');
             });
           } else {
-            req.flash('error', 'Invalid email or password.');
-            return req.session.save((err) => {
-              res.redirect('/login');
+            // req.flash('error', 'Invalid email or password.');
+            // return req.session.save((err) => {
+            //   res.redirect('/login');
+            // });
+            return res.status(422).render('auth/login', {
+              path: '/login',
+              pageTitle: 'Login',
+              errorMessage: 'Invalid email or password.',
+              oldInput: { email, password },
+              validationErrors: []
             });
           }
         });
@@ -80,7 +102,13 @@ exports.postLogin = (req, res, next) => {
 exports.getSignup = (req, res, next) => {
   res.render('auth/signup', {
     path: '/signup',
-    pageTitle: 'Signup'
+    pageTitle: 'Signup',
+    oldInput: {
+      email: '',
+      password: '',
+      confirmPassword: ''
+    },
+    validationErrors: []
   });
 }
 
@@ -89,12 +117,18 @@ exports.postSignup = (req, res, next) => {
   const password = req.body.password;
   const confirmPassword = req.body.confirmPassword;
   const errors = validationResult(req);
-  
-  if(!errors.isEmpty()) {
+
+  if (!errors.isEmpty()) {
     return res.status(422).render('auth/signup', {
       path: '/signup',
       pageTitle: 'Signup',
-      errorMessage: errors.array()[0].msg
+      errorMessage: errors.array()[0].msg,
+      oldInput: {
+        email,
+        password,
+        confirmPassword
+      },
+      validationErrors: errors.array()
     });
   }
 
@@ -148,15 +182,15 @@ exports.postReset = (req, res, next) => {
 
     const token = buffer.toString('hex');
 
-    User.findOne({ email: req.body.email})
+    User.findOne({ email: req.body.email })
       .then(user => {
-        if(!user) {
+        if (!user) {
           req.flash('error', 'User with this email does not exist.');
           req.session.save((err) => {
             res.redirect('/reset');
           });
 
-          return new Promise(() => {}); // stop chain so we don't send response again
+          return new Promise(() => { }); // stop chain so we don't send response again
         }
 
         user.resetToken = token;
@@ -202,7 +236,7 @@ exports.getNewPassword = (req, res, next) => {
       console.log(err);
       res.redirect('/reset');
     });
-    
+
 }
 
 exports.postNewPassword = (req, res, next) => {
