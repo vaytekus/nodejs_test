@@ -1,3 +1,7 @@
+const fs = require('fs');
+const path = require('path');
+const pdfkit = require('pdfkit');
+
 const Product = require('../models/product');
 const Order = require('../models/order');
 
@@ -142,6 +146,60 @@ exports.getOrders = (req, res, next) => {
     })
     .catch(err => {
       const error = new Error(err || 'Getting orders failed. Please try again.');
+      error.httpStatusCode = 500;
+      return next(error);
+    });
+};
+
+exports.getInvoice = (req, res, next) => {
+  const orderId = req.params.orderId;
+
+
+  Order.findById(orderId)
+    .then(order => {
+      if(!order) {
+        return next(new Error('Order not found.'));
+      }
+
+      if(order.user.userId.toString() !== req.user._id.toString()) {
+        return next(new Error('Unauthorized.'));
+      }
+
+      const invoiceName = 'invoice-' + orderId + '.pdf';
+      const invoicePath = path.join(__dirname, '..', 'data', 'invoices', invoiceName);
+      // fs.readFile(invoicePath, (err, data) => {
+      //   if(err) {
+      //     const error = new Error(err || 'Getting invoice failed. Please try again.');
+      //     error.httpStatusCode = 500;
+      //     return next(error);
+      //   }
+      //   res.setHeader('Content-Type', 'application/pdf');
+      //   res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName + '"'); // attachment
+      //   res.send(data);
+      // });
+      
+      // const file = fs.createReadStream(invoicePath);
+      // res.setHeader('Content-Type', 'application/pdf');
+      // res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName + '"'); // attachment
+      // file.pipe(res);
+      const pdfDocument = new pdfkit();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName + '"'); // attachment
+      pdfDocument.pipe(fs.createWriteStream(invoicePath));
+      pdfDocument.pipe(res);
+
+      pdfDocument.font('Helvetica-Bold');
+      pdfDocument.fontSize(25).text('Invoice', { underline: true, align: 'center' });
+      pdfDocument.moveDown();
+      pdfDocument.fontSize(20).text('Order ID: ' + orderId, { align: 'center' });
+      pdfDocument.moveDown();
+      pdfDocument.fontSize(15).text('Order Date: ' + new Date().toLocaleDateString(), { align: 'center' });
+      pdfDocument.moveDown();
+      pdfDocument.fontSize(15).text('Order Total: ' + order.quantity, { align: 'center' });
+      pdfDocument.end();
+    })
+    .catch((err) => {
+      const error = new Error(err || 'Getting invoice failed. Please try again.');
       error.httpStatusCode = 500;
       return next(error);
     });

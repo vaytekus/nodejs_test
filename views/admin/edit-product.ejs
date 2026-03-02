@@ -16,7 +16,8 @@
           <% } %>
             <form class="product-form"
                   action="/admin/<% if (editing) { %>edit-product<% } else { %>add-product<% } %>"
-                  method="POST">
+                  method="POST"
+                  enctype="multipart/form-data">
               <input type="hidden"
                      name="_csrf"
                      value="<%= csrfToken %>">
@@ -28,13 +29,19 @@
                        id="title"
                        value="<% if (editing || hasError) { %><%= product.title %><% } %>">
               </div>
-              <div class="form-control">
+              <!-- <div class="form-control">
                 <label for="imageUrl">Image URL</label>
                 <input type="text"
                        class="<%= validationErrors.find(error => error.path === 'imageUrl') ? 'form-control--invalid' : '' %>"
                        name="imageUrl"
                        id="imageUrl"
                        value="<% if (editing || hasError) { %><%= product.imageUrl %><% } %>">
+              </div> -->
+              <div class="form-control">
+                <label for="imageUrl">Image upload</label>
+                <input type="file"
+                       name="image"
+                       id="image">
               </div>
               <div class="form-control">
                 <label for="price">Price</label>

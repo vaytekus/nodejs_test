@@ -9,6 +9,7 @@ const { MongoStore } = require('connect-mongo');
 const { doubleCsrf } = require('csrf-csrf');
 require('dotenv').config();
 const flash = require('connect-flash');
+const multer = require('multer');
 
 const errorController = require('./controllers/error');
 const User = require('./models/user');
@@ -31,6 +32,23 @@ const {
   getCsrfTokenFromRequest: (req) => req.body?._csrf ?? req.headers['x-csrf-token'],
 });
 
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'images');
+  },
+  filename: (req, file, cb) => {
+    cb(null, new Date().getTime() + '-' + file.originalname);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg') {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
@@ -39,7 +57,11 @@ const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
 app.use(bodyParser.urlencoded({ extended: false }));
+
+app.use(multer({ storage: fileStorage, fileFilter: fileFilter }).single('image'));
+
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use(session({
   secret: 'my secret',
   resave: false,
@@ -95,7 +117,7 @@ app.use((error, req, res, next) => {
   res.status(error.httpStatusCode || 500).render('500', {
     pageTitle: 'Error!',
     path: '/500',
-    isAuthenticated: req.isLoggedIn
+    isAuthenticated: req.session && req.session.isLoggedIn
   });
 });
 

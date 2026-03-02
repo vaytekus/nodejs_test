@@ -17,7 +17,7 @@ router.get('/products', adminController.getProducts);
 // /admin/add-product => POST
 router.post('/add-product', [
   body('title').trim().isLength({ min: 3 }).withMessage('Please enter a title with at least 3 characters.'),
-  body('imageUrl').trim().isURL().withMessage('Please enter a valid image URL.'),
+  // body('imageUrl').trim().isURL().withMessage('Please enter a valid image URL.'),
   body('price').trim().isFloat().withMessage('Please enter a valid price.'),
   body('description').trim().isLength({ min: 5, max: 400 }).withMessage('Please enter a description with at least 5 characters and less than 400 characters.'),
 ], isAuth, adminController.postAddProduct);
@@ -26,9 +26,11 @@ router.get('/edit-product/:productId', isAuth, adminController.getEditProduct);
 
 router.post('/edit-product', [
   body('title').trim().isLength({ min: 3 }).withMessage('Please enter a title with at least 3 characters.'),
-  body('imageUrl').trim().isURL().withMessage('Please enter a valid image URL.'),
+  // body('imageUrl').trim().isURL().withMessage('Please enter a valid image URL.'),
   body('price').trim().isFloat().withMessage('Please enter a valid price.'),
   body('description').trim().isLength({ min: 5, max: 400 }).withMessage('Please enter a description with at least 5 characters and less than 400 characters.'),
 ], isAuth, adminController.postEditProduct);
+
+router.post('/delete-product', isAuth, adminController.postDeleteProduct);
 
 module.exports = router;
