@@ -55,16 +55,23 @@ app.use(doubleCsrfProtection);
 app.use(flash());
 
 app.use((req, res, next) => {
+  // throw new Error('User not found.');
   if (!req.session.user) {
     return next();
   }
   
   User.findById(req.session.user._id)
-  .then(user => {
-    req.user = user;
-    next();
-  })
-  .catch(err => console.log(err));
+    .then(user => {
+      if (!user) {
+        return next(new Error('User not found.'));
+      }
+
+      req.user = user;
+      next();
+    })
+    .catch(err => {
+      next(new Error(err || 'User not found.'));
+    });
 });
 
 // Make CSRF token and flash messages available in all views
@@ -80,7 +87,17 @@ app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.use('/500', errorController.get500);
 app.use(errorController.get404);
+
+app.use((error, req, res, next) => {
+  console.log(error);
+  res.status(error.httpStatusCode || 500).render('500', {
+    pageTitle: 'Error!',
+    path: '/500',
+    isAuthenticated: req.isLoggedIn
+  });
+});
 
 mongoose
   .connect(

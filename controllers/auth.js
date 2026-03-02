@@ -61,7 +61,6 @@ exports.postLogin = (req, res, next) => {
   User.findOne({ email: email })
     .then(user => {
       if (!user) {
-        // req.flash('error', 'Invalid email or password.');
         return res.status(422).render('auth/login', {
           path: '/login',
           pageTitle: 'Login',
@@ -82,10 +81,6 @@ exports.postLogin = (req, res, next) => {
               res.redirect('/');
             });
           } else {
-            // req.flash('error', 'Invalid email or password.');
-            // return req.session.save((err) => {
-            //   res.redirect('/login');
-            // });
             return res.status(422).render('auth/login', {
               path: '/login',
               pageTitle: 'Login',
@@ -96,7 +91,11 @@ exports.postLogin = (req, res, next) => {
           }
         });
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      const error = new Error(err || 'Logging in failed. Please try again.');
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 }
 
 exports.getSignup = (req, res, next) => {
@@ -157,6 +156,11 @@ exports.postSignup = (req, res, next) => {
         subject: 'Signup Success',
         html: '<h1>Signup Success</h1>'
       });
+    })
+    .catch(err => {
+      const error = new Error(err || 'Signing up failed. Please try again.');
+      error.httpStatusCode = 500;
+      return next(error);
     });
 }
 
