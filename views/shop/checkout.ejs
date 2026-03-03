@@ -1,0 +1,27 @@
+<%- include('../includes/head.ejs') %>
+  <link rel="stylesheet" href="/css/cart.css">
+  </head>
+
+  <body>
+    <%- include('../includes/navigation.ejs') %>
+    <main>
+      <h1>Checkout</h1>
+      <ul class="cart__item-list">
+        <% products.forEach(p => { %>
+          <li class="cart__item">
+            <h1><%= p.productId.title %></h1>
+            <h2>Quantity: <%= p.quantity %></h2>
+            <h2>Price: <%= p.productId.price %></h2>
+          </li>
+        <% }) %>
+      </ul>
+      <h2>Total Sum: <%= totalSum %></h2>
+      <div class="centered">
+        <% if (checkoutUrl) { %>
+          <a href="<%= checkoutUrl %>" class="btn" id="order-btn">Proceed to Stripe Checkout</a>
+        <% } else { %>
+          <button class="btn" disabled>Loading…</button>
+        <% } %>
+      </div>
+    </main>
+    <%- include('../includes/end.ejs') %>
