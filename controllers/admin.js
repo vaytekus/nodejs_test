@@ -32,9 +32,7 @@ exports.postAddProduct = (req, res, next) => {
       product: {
         title: title,
         price: price,
-        description: description,
-        imageUrl: imageUrl,
-        userId: req.user
+        description: description
       },
       hasError: true,
       errorMessage: errors.array()[0].msg,

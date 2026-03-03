@@ -5,21 +5,7 @@ const pdfkit = require('pdfkit');
 const Product = require('../models/product');
 const Order = require('../models/order');
 
-exports.getProducts = (req, res, next) => {
-  Product.find()
-    .then(products => {
-      res.render('shop/product-list', {
-        prods: products,
-        pageTitle: 'All Products',
-        path: '/products',
-      });
-    })
-    .catch(err => {
-      const error = new Error(err || 'Getting products failed. Please try again.');
-      error.httpStatusCode = 500;
-      return next(error);
-    });
-};
+const ITEMS_PER_PAGE = 2;
 
 exports.getProduct = (req, res, next) => {
   const prodId = req.params.productId;
@@ -38,14 +24,80 @@ exports.getProduct = (req, res, next) => {
     });
 };
 
-exports.getIndex = (req, res, next) => {
+exports.getProducts = (req, res, next) => {
+  const page = +req.query.page || 1;
+
   Product.find()
+    .skip((page - 1) * ITEMS_PER_PAGE)
+    .limit(ITEMS_PER_PAGE)
     .then(products => {
-      res.render('shop/index', {
-        prods: products,
-        pageTitle: 'Shop',
-        path: '/',
-      });
+      Product.countDocuments()
+        .then(totalProducts => {
+          const hasNextPage = ITEMS_PER_PAGE * page < totalProducts;
+          const hasPreviousPage = page > 1;
+          const nextPage = hasNextPage ? page + 1 : null;
+          const previousPage = hasPreviousPage ? page - 1 : null;
+          
+          res.render('shop/product-list', {
+            prods: products,
+            pageTitle: 'All Products',
+            path: '/products',
+            currentPage: page,
+            hasNextPage: hasNextPage,
+            hasPreviousPage: hasPreviousPage,
+            nextPage: nextPage,
+            previousPage: previousPage,
+            lastPage: Math.ceil(totalProducts / ITEMS_PER_PAGE),
+            firstPage: 1,
+            pages: Array.from({ length: Math.ceil(totalProducts / ITEMS_PER_PAGE) }, (_, i) => i + 1),
+          });
+        })
+        .catch(err => {
+          const error = new Error(err || 'Getting products failed. Please try again.');
+          error.httpStatusCode = 500;
+          return next(error);
+        });
+    })
+    .catch(err => {
+      const error = new Error(err || 'Getting products failed. Please try again.');
+      error.httpStatusCode = 500;
+      return next(error);
+    });
+};
+
+exports.getIndex = (req, res, next) => {
+  const page = +req.query.page || 1;
+
+  Product.find()
+    .skip((page - 1) * ITEMS_PER_PAGE)
+    .limit(ITEMS_PER_PAGE)
+    .then(products => {
+      Product.countDocuments()
+        .then(totalProducts => {
+          const hasNextPage = ITEMS_PER_PAGE * page < totalProducts;
+          const hasPreviousPage = page > 1;
+          const nextPage = hasNextPage ? page + 1 : null;
+          const previousPage = hasPreviousPage ? page - 1 : null;
+          
+          res.render('shop/index', {
+            prods: products,
+            pageTitle: 'Shop',
+            path: '/',
+            currentPage: page,
+            hasNextPage: hasNextPage,
+            hasPreviousPage: hasPreviousPage,
+            nextPage: nextPage,
+            previousPage: previousPage,
+            lastPage: Math.ceil(totalProducts / ITEMS_PER_PAGE),
+            firstPage: 1,
+            pages: Array.from({ length: Math.ceil(totalProducts / ITEMS_PER_PAGE) }, (_, i) => i + 1),
+          });
+        })
+        .catch(err => {
+          const error = new Error(err || 'Getting products failed. Please try again.');
+          error.httpStatusCode = 500;
+          return next(error);
+        });
     })
     .catch(err => {
       const error = new Error(err || 'Getting products failed. Please try again.');
