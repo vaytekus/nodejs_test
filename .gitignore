@@ -37,3 +37,4 @@ playwright-report/
 /playwright/.cache/
 
 .env
+.env.development

@@ -72,7 +72,6 @@ app.use(session({
   })
 }));
 app.use(cookieParser());
-
 app.use(doubleCsrfProtection);
 app.use(flash());
 
